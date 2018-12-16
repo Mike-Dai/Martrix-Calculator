@@ -6,8 +6,10 @@
 
 void InputMartrix();
 void OutputMartrix();
-void RowEchelonForm(double (*a)[N], double (*at)[M], int m, int n);//行阶梯形矩阵 
+void RowEchelonForm(double (*a)[M], double (*at)[M], int m, int n);//行阶梯形矩阵 
+void SimplifyForm(double (*a)[M], double (*at)[M], int m, int n);
 void Transposition(double (*a)[N], double (*at)[M], int m, int n);//矩阵转置 
+
 int t;
 int m,n;
 double mtx1[M][N], mtx2[N][M];
@@ -32,6 +34,11 @@ int main()
 		case 1:
 			InputMartrix();
 			RowEchelonForm(mtx1, mtx2, m, n);
+			OutputMartrix();
+			break;
+		case 2:
+			InputMartrix();
+			SimplifyForm(mtx1, mtx2, m, n);
 			OutputMartrix();
 			break;
 		case 6:
@@ -70,13 +77,17 @@ void OutputMartrix()
 	{
 		for (j = 0; j < n; j++)
 		{
+			if (mtx2[i][j] == 0)
+			{
+				mtx2[i][j] = 0;//防止"-0"出现 
+			}
 			if (mtx2[i][j] == (int)mtx2[i][j])
 			{
-				printf("%-4.0f", mtx2[i][j]);
+				printf("%-5.0f", mtx2[i][j]);
 			}
 			else
 			{
-				printf("%-4f", mtx2[i][j]);
+				printf("%-5.3f", mtx2[i][j]);
 			}
 		}
 		printf("\n");
@@ -85,8 +96,9 @@ void OutputMartrix()
 
 void RowEchelonForm(double (*a)[M], double (*at)[M], int m, int n)
 {
-	int tmp, i, j, k, p;
+	int tmp, i, j, k, p, q, r;
 	double ratio;//比率 
+	//将a矩阵复制到at矩阵 
 	for (i = 0; i < m; i++)
 	{
 		for (j = 0; j < n; j++)
@@ -94,33 +106,83 @@ void RowEchelonForm(double (*a)[M], double (*at)[M], int m, int n)
 			*(*(at + i) + j) = *(*(a + i) + j);
 		}
 	}
-	printf("完成复制\n");
+	k = 0;//第k列
+	//高斯消元法 
 	for (i = 0; i < m; i++)
 	{
-		printf("进入i循环\n");
-		k = 0;
-		while (k < n)//找到被除行第一个不为0的位置 
+		//保证矩阵始终成阶梯形 
+		while (k < n) 
 		{
-			if (*(*(at + i) + k) != 0)
+			//q为行数 ，遍历每一行，将第一个非0元素最靠前的那一行放到最上面
+			for (q = i; q < m; q++) 
 			{
-				break;
+				if (*(*(at + q) + k) != 0)
+				{
+					//与第i行交换 
+					for (r = 0; r < n; r++)
+					{
+						int t;
+						t = *(*(at + i) + r);
+						*(*(at + i) + r) = *(*(at + q) + r);
+						*(*(at + q) + r) = t;
+					}
+					goto out;//跳出多重循环 
+				}
 			}
 			k++;
 		}
+		out:
+		//若下方全为0，则结束 
 		if (k == n)
 		{
-			continue;
+			return;
 		}
+		//从第i行下一行开始，使每一行第k列为0 
 		for (j = i + 1; j < m; j++)
 		{
-			printf("进入j循环\n");
-			ratio = *(*(at + j) + k) / *(*(at + i) + k);
-			p = k;
+			ratio = *(*(at + j) + k) / *(*(at + i) + k);//(j,k)除以(i,k) 为比率 
+			p = k;//第p列
+			//在第j行中，对第k列及以后的元素作减法 
 			while (p < n)
 			{
-				printf("进入p循环\n");
 				*(*(at + j) + p) -= ratio * *(*(at + i) + p);
 				p++; 	
+			}
+		}
+	}
+}
+
+void SimplifyForm(double (*a)[M], double (*at)[M], int m, int n)
+{
+	RowEchelonForm(a, at, m, n);
+	int i, j, k, p;
+	double ratio1, ratio2;
+	for (i = m - 1; i >= 0; i--)//第i行 
+	{
+		//寻找第一个非0元素 
+		int index1 = -1;//记录第一个非0元素的列数 
+		for (j = 0; j < n; j++)//第j列 
+		{
+			if (*(*(at + i) + j) != 0 && index1 == -1)
+			{
+				index1 = j;
+				ratio1 = *(*(at + i) + index1);
+			}
+			if (index1 >= 0)
+			{
+				*(*(at + i) + j) /= ratio1;//同行后面的元素按相同比率变化 
+			}
+		}
+		//如果第i行有非0元素，那么上面每一行依次对第i行作减法 
+		if (index1 >= 0)
+		{
+			for (k = i - 1; k >= 0; k--)//第k行 
+			{
+				ratio2 = *(*(at + k) + index1) / *(*(at + i) + index1);
+				for (p = index1; p < n; p++)//第p列 
+				{
+					*(*(at + k) + p) -= ratio2 * *(*(at + i) + p);
+				}
 			}
 		}
 	}
