@@ -1,50 +1,111 @@
 /* 矩阵运算 */
 
 #include <stdio.h>
+#include <math.h>
+#include <string.h>
 #define M 20
 #define N 20
 
-void InputMartrix();
-void OutputMartrix();
-void RowEchelonForm(double (*a)[M], double (*at)[M], int m, int n);//行阶梯形矩阵 
-void SimplifyForm(double (*a)[M], double (*at)[M], int m, int n);
-void Transposition(double (*a)[N], double (*at)[M], int m, int n);//矩阵转置 
+void InputMartrix(double (*a)[M]);		//输入矩阵 
+void OutputMartrix(double (*a)[M]);		//输出矩阵 
+void RowEchelonForm(double (*a)[M], double (*at)[M], int m, int n);					//行阶梯形矩阵 
+void SimplifyForm(double (*a)[M], double (*at)[M], int m, int n);					//最简行矩阵 
+void Transposition(double (*a)[N], double (*at)[M], int m, int n);					//矩阵转置 
+double Determinant(double** a, int x, int y);						//行列式 
+void AddMartrix(double (*a1)[M], double (*a2)[M], double (*at)[M], int m, int n);	//矩阵加法 
+void NumMultipyMartrix(int number, double (*a)[M], double (*at)[M], int m, int n);	//矩阵数乘 
+void MultipyMartrix(double (*a1)[M], double (*a2)[M], double (*at)[M], int m, int s, int n);//矩阵乘法 
+int MartrixRank(double (*a)[M], double (*at)[M], int m, int n);												//矩阵的秩 
 
-int t;
-int m,n;
-double mtx1[M][N], mtx2[N][M];
+int choice;
+int m, s, n;
+double mtx1[M][N], mtx2[N][M], mtx3[M][N];
 	
 int main()
 {
+	int i, j;
+	int x, y;
 	printf("矩阵计算器\n");
 	printf("1.行阶梯形矩阵\n");
 	printf("2.行最简形矩阵\n");
 	printf("3.行列式\n");
 	printf("4.矩阵加法\n");
-	printf("5.矩阵乘法\n");
-	printf("6.矩阵转置\n");
-	printf("7.伴随矩阵\n");
-	printf("8.矩阵求逆\n");
-	printf("9.矩阵求秩\n");
-	printf("10.解线性方程组\n");
-	printf("请选择1~10\n");
-	scanf("%d", &t);
-	switch (t)
+	printf("5.矩阵数乘\n");
+	printf("6.矩阵乘法\n");
+	printf("7.矩阵转置\n");
+	printf("8.伴随矩阵\n");
+	printf("9.矩阵求逆\n");
+	printf("10.矩阵求秩\n");
+	printf("11.解线性方程组\n");
+	printf("请选择1~11\n");
+	scanf("%d", &choice);
+	switch (choice)
 	{
 		case 1:
-			InputMartrix();
+			InputMartrix(mtx1);
 			RowEchelonForm(mtx1, mtx2, m, n);
-			OutputMartrix();
+			OutputMartrix(mtx2);
 			break;
 		case 2:
-			InputMartrix();
+			InputMartrix(mtx1);
 			SimplifyForm(mtx1, mtx2, m, n);
-			OutputMartrix();
+			OutputMartrix(mtx2);
+			break;
+		case 3:
+			InputMartrix(mtx1);
+			double det;
+			x = m, y = n;
+			det = Determinant(mtx1, x, y);
+			printf("矩阵的行列式是%f\n", det);
+			break;
+		case 4:
+			printf("请输入第一个矩阵：\n");
+			InputMartrix(mtx1);
+			printf("请输入第二个矩阵：\n");
+			InputMartrix(mtx2);
+			AddMartrix(mtx1, mtx2, mtx3, m, n);
+			OutputMartrix(mtx3);
 			break;
 		case 6:
-			InputMartrix();
+			printf("请输入第一个矩阵：\n");
+			printf("请输入行数：");
+			scanf("%d", &m);
+			printf("请输入列数：");
+			scanf("%d", &s);
+			for (i = 0; i < m; i++)
+			{
+				printf("请输入第%d行：", i+1);
+				for (j = 0; j < s; j++)
+				{
+					scanf("%lf", &mtx1[i][j]);
+				}
+			}
+			printf("请输入第二个矩阵：\n");
+			printf("请输入行数：");
+			scanf("%d", &s);
+			printf("请输入列数：");
+			scanf("%d", &n);
+			for (i = 0; i < s; i++)
+			{
+				printf("请输入第%d行：", i+1);
+				for (j = 0; j < n; j++)
+				{
+					scanf("%lf", &mtx2[i][j]);
+				}
+			}
+			MultipyMartrix(mtx1, mtx2, mtx3, m, s, n);
+			OutputMartrix(mtx3);
+			break;
+		case 7:
+			InputMartrix(mtx1);
 			Transposition(mtx1, mtx2, m, n);
-			OutputMartrix();
+			OutputMartrix(mtx2);
+			break;
+		case 10:
+			InputMartrix(mtx1);
+			int rank;
+			rank = MartrixRank(mtx1, mtx2, m, n);
+			printf("矩阵的秩是%d\n", rank);
 			break;
 		default:
 			break;
@@ -53,41 +114,43 @@ int main()
 	return 0;
 } 
 
-void InputMartrix()
+void InputMartrix(double (*a)[M])
 {
 	printf("请输入行数：");
 	scanf("%d", &m);
 	printf("请输入列数：");
 	scanf("%d", &n);
 	int i, j;
+	double t;
 	for (i = 0; i < m; i++)
 	{
 		printf("请输入第%d行：", i+1);
 		for (j = 0; j < n; j++)
 		{
-			scanf("%lf", &mtx1[i][j]);
+			scanf("%lf", &t);
+			*(*(a + i) + j) = t;
 		}
 	}
 }
 
-void OutputMartrix()
+void OutputMartrix(double (*a)[M])
 {
 	int i, j;
 	for (i = 0; i < m; i++)
 	{
 		for (j = 0; j < n; j++)
 		{
-			if (mtx2[i][j] == 0)
+			if (*(*(a + i) + j) == 0)
 			{
-				mtx2[i][j] = 0;//防止"-0"出现 
+				*(*(a + i) + j) = 0;//防止"-0"出现 
 			}
-			if (mtx2[i][j] == (int)mtx2[i][j])
+			if (*(*(a + i) + j) == (int)*(*(a + i) + j))
 			{
-				printf("%-5.0f", mtx2[i][j]);
+				printf("%-5.0f", *(*(a + i) + j));
 			}
 			else
 			{
-				printf("%-5.3f", mtx2[i][j]);
+				printf("%-5.3f", *(*(a + i) + j));
 			}
 		}
 		printf("\n");
@@ -199,5 +262,103 @@ void Transposition(double (*a)[N], double (*at)[M], int m, int n)//求矩阵转置
 		}
 	} 
 }
+//???
 
+double Determinant(double** a, int x, int y)
+{
+	printf("here!\n");
+	if (y == 1)
+	{
+		return a[0][0];
+	}
+	double det = 0;
+	int i, j, k;
+	int offset = 0;
+	double** b = (double**)malloc(sizeof(double)*x);
+	for (i = 0; i < x; i++)
+	{
+		b[i] = (double*)malloc(sizeof(double)*y);
+	}
+	for (k = 0; k < y; i++)//原矩阵第0行 
+	{	
+		for (i = 0; i < x - 1; i++)
+		{
+			for (j = 0; j < y; j++)
+			{
+				if (j < k)
+				{
+					offset = 0;
+				}
+				else if (j >= k)
+				{
+					offset = 1;
+				}
+				b[i][j] = *(*(a + i + 1) + j + offset);
+			}
+		}
+		printf("x-1=%d y-1=%d\n", x-1, y-1);
+		det += *(*a + k) * pow(-1, k) * Determinant(b, x - 1, y - 1);
+		printf("det = %d\n", det);
+	}
+	return det;
+} 
 
+void AddMartrix(double (*a1)[M], double (*a2)[M], double (*at)[M], int m, int n)
+{
+	int i, j;
+	for (i = 0; i < m; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			*(*(at + i) + j) = *(*(a1 + i) + j) + *(*(a2 + i) + j);
+		} 
+	}
+}
+
+void NumMultipyMartrix(int number, double (*a)[M], double (*at)[M], int m, int n)
+{
+	int i, j;
+	for (i = 0; i < m; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			*(*(at + i) + j) = *(*(a + i) + j) * number;
+		} 
+	}
+}
+
+void MultipyMartrix(double (*a1)[M], double (*a2)[M], double (*at)[M], int m, int s, int n)
+{
+	int i, j, k;
+	for (i = 0; i < m; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			*(*(at + i) + j) = 0;
+			for (k = 0; k < s; k++)
+			{
+				//a1的第i行分别和a2的第j列相乘 
+				*(*(at + i) + j) += *(*(a1 + i) + k) * *(*(a2 + k) + j);
+			}
+		}
+	}
+} 
+
+int MartrixRank(double (*a)[M], double (*at)[M], int m, int n)
+{
+	int i, j;
+	RowEchelonForm(a, at, m, n);//先把矩阵化为行阶梯形 
+	int rank = 0;
+	for (i = 0; i < m; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			if (*(*(at + i) + j) != 0)//如果该行有非0元素，矩阵的秩加1 
+			{
+				rank++;
+				break;
+			}
+		}
+	}
+	return rank;
+}
